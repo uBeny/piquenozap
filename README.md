@@ -1,6 +1,11 @@
  Pique no Zap
 Bem-vindo ao Pique no Zap! 👋
 
+INTEGRANTES:
+
+BENYLSON PEREIRA EVARISTO DA SILVA - 202319070718
+YAGO GUIMARÃES DA SILVA - 202019070631
+
 Este é um projeto de um chat de mensagens dinâmico e interativo, desenvolvido para facilitar a comunicação em tempo real entre usuários. Imagine ter seu próprio "zap" para trocar ideias, informações e se conectar com outras pessoas de forma rápida e eficiente.
 
 ✨ Funcionalidades Principais

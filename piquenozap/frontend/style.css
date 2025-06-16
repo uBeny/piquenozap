@@ -1,0 +1,83 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Corpo da página */
+body {
+    background-color: #070424;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container principal da tela de login */
+.login {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    width: 700px;
+    text-align: justify;
+}
+
+/* Formulário */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Campos de entrada */
+form input[type="text"],
+form input[type="password"] {
+    padding: 15px;
+    width: 100%;
+    border: 2px solid #bebebe;
+    border-radius: 100px;
+    font-size: 14px;
+    margin-top: 10px;
+    justify-content: left;
+}
+
+/* Design dos botões */
+.grupo-botoes {
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  gap: 10px; 
+  margin-top: 20px; 
+}
+
+.botao-entrar,
+.botao-registrar {
+  padding: 10px 130px;
+  cursor: pointer;
+  border-radius: 20px;
+  margin-top: 15px;
+}
+
+.botao-entrar {
+  background-color: #070424;
+  color: white;
+  border: 1.5px solid #030303;
+}
+
+.botao-registrar {
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  border: 1.5px solid #030303;
+}
+
+.register {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    width: 700px;
+    text-align: justify;
+}

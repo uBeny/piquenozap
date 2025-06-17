@@ -196,33 +196,33 @@ form input[type="password"] {
 }
 
 .new-group-button {
-    background-color: #4CAF50;
+    background-color: #070424;
     color: white;
     border: none;
-    height: 35px;
+    height: 40px;
+    width: 150px;
     border-radius: 20px;
     cursor: pointer;
     font-size: 0.9em;
     font-weight: 700;
     text-transform: uppercase;
     transition: background-color 0.2s ease;
+    margin-right: 10px;
 }
 
 .logout-button{
-  background-color: #4CAF50;
-    color: white;
+  background-color: #ffffff;
+    color: #070424;
     border: none;
-    padding: 10px 20px;
+    height: 40px;
+    width: 80px;
     border-radius: 20px;
     cursor: pointer;
     font-size: 0.9em;
     font-weight: 700;
     text-transform: uppercase;
     transition: background-color 0.2s ease;
-}
-
-.new-group-button:hover {
-    background-color: #45a049;
+    border: 1.5px solid #030303;
 }
 
 .messages-area {
@@ -237,7 +237,7 @@ form input[type="password"] {
 .message-bubble {
     padding: 12px 18px;
     border-radius: 18px;
-    max-width: 65%; /* Largura máxima ajustada para mensagens */
+    max-width: 65%;
     position: relative;
     font-size: 0.95em;
     line-height: 1.4;
@@ -252,10 +252,10 @@ form input[type="password"] {
 }
 
 .message-bubble.received {
-    background-color: #FFF; /* Branco para mensagens recebidas */
-    border: 1px solid #DCDCDC; /* Borda clara para mensagens recebidas */
+    background-color: #FFF; 
+    border: 1px solid #DCDCDC; 
     align-self: flex-start;
-    border-bottom-left-radius: 5px; /* Estilo de canto da imagem */
+    border-bottom-left-radius: 5px; 
 }
 
 .message-bubble.received::before {
@@ -270,10 +270,10 @@ form input[type="password"] {
 }
 
 .message-bubble.sent {
-    background-color: #5D5477; /* Roxo mais escuro para mensagens enviadas */
+    background-color: #5D5477;
     color: #fff;
     align-self: flex-end;
-    border-bottom-right-radius: 5px; /* Estilo de canto da imagem */
+    border-bottom-right-radius: 5px;
 }
 
 .message-bubble.sent::before {
@@ -287,11 +287,11 @@ form input[type="password"] {
     font-size: 0.8em;
     font-weight: 700;
     margin-bottom: 5px;
-    color: #2D2644; /* Cor para o nome do remetente no balão de recebido */
+    color: #2D2644;
 }
 
 .message-bubble.sent .message-sender {
-    color: #fff; /* Cor do nome do remetente para mensagens enviadas, se exibido */
+    color: #fff;
 }
 
 .message-input-area {

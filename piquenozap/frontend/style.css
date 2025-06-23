@@ -225,6 +225,22 @@ form input[type="password"] {
     border: 1.5px solid #030303;
 }
 
+.add-membro{
+    background-color: #070424;
+    color: #ffffff;
+    border: none;
+    height: 40px;
+    width: 150px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease;
+    border: 1.5px solid #030303;
+    margin-right: 10px;
+}
+
 .messages-area {
     flex-grow: 1;
     padding: 20px 30px;

@@ -21,21 +21,29 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                // REMOVIDO: Permissão para recursos estáticos
-                .anyRequest().authenticated()
-            )
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
+            
+            .requestMatchers(
+                new AntPathRequestMatcher("/**.html"),
+                new AntPathRequestMatcher("/**.css"),
+                new AntPathRequestMatcher("/**.js")
+            ).permitAll()
+            .anyRequest().authenticated()
+        )
+        .formLogin(form -> form
+            .loginPage("/login.html")
+            .permitAll()
+        )
+        .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
-        return http.build();
-    }
-
+    return http.build();
+}
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -46,4 +54,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
+
+    
 }

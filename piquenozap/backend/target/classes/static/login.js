@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok) {
-                alert(data.message + ' Redirecionando para o chat...');
                 
                 setTimeout(() => {
                     window.location.href = 'chat.html';

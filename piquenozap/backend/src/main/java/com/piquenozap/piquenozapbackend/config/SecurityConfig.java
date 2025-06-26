@@ -12,6 +12,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -21,39 +22,42 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-            .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-            
-            .requestMatchers(
-                new AntPathRequestMatcher("/**.html"),
-                new AntPathRequestMatcher("/**.css"),
-                new AntPathRequestMatcher("/**.js")
-            ).permitAll()
-            .anyRequest().authenticated()
-        )
-        .formLogin(form -> form
-            .loginPage("/login.html")
-            .permitAll()
-        )
-        .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
-
-    return http.build();
-}
-    @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
-    }
-
     
-}
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
+                
+                .requestMatchers(
+                    new AntPathRequestMatcher("/**.html"),
+                    new AntPathRequestMatcher("/**.css"),
+                    new AntPathRequestMatcher("/**.js"),
+                    new AntPathRequestMatcher("/images/**")
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login.html")
+                .permitAll()
+            )
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+
+        return http.build();
+    }
+        @Bean
+        public CorsFilter corsFilter() {
+            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+            CorsConfiguration config = new CorsConfiguration();
+            config.addAllowedOrigin("*");
+            config.addAllowedHeader("*");
+            config.addAllowedMethod("*");
+            source.registerCorsConfiguration("/**", config);
+            return new CorsFilter(source);
+        }
+
+        
+    }

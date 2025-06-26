@@ -331,3 +331,49 @@ form input[type="password"] {
 .message-input-area input[type="text"]::placeholder {
     color: #aaa;
 }
+
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.register-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+
+.logo {
+    width: 90px;
+    height: 90px;
+    margin-bottom: 15px;
+}
+
+.welcome-title {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #333;
+}
+
+.register-title {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #333;
+}
+.welcome-subtitle {
+    font-size: 1.2em;
+    font-weight: 400;
+    color: #8f8f8f;
+    margin-top: 10px;
+}
+
+.register-subtitle {
+    font-size: 1.2em;
+    font-weight: 400;
+    color: #8f8f8f;
+    margin-top: 10px;
+}

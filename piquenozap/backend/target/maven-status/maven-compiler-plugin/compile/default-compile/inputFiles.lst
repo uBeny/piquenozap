@@ -1,6 +1,11 @@
 /home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/PiquenozapBackendApplication.java
 /home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/config/SecurityConfig.java
+/home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/config/WebSocketConfig.java
+/home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/controller/ChatController.java
 /home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/controller/Controller.java
+/home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/controller/UserController.java
+/home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/dto/UserDTO.java
+/home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/model/ChatMessage.java
 /home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/model/User.java
 /home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/repository/UserRepository.java
 /home/beny/Documentos/Progweb/Piquenozap/piquenozap/piquenozap/backend/src/main/java/com/piquenozap/piquenozapbackend/service/AuthService.java

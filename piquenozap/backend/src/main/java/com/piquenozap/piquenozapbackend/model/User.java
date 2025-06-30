@@ -5,6 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -21,4 +27,7 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+    private Set<ChatGroup> groups= new HashSet<>();
 }

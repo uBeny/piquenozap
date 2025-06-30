@@ -21,11 +21,13 @@ public class ChatMessage {
     private String sender;
     private String recipientEmail;
     private MessageType type;
-    private LocalDateTime timestamp; 
+    private LocalDateTime timestamp;
+    private Long groupId;
 
     public enum MessageType {
         CHAT,
         JOIN,
-        LEAVE
+        LEAVE,
+        GROUP_CHAT
     }
 }

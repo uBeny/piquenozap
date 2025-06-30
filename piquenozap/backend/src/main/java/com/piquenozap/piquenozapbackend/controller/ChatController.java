@@ -31,4 +31,11 @@ public class ChatController {
             chatMessage
         );
     }
+
+    @MessageMapping("/chat.sendGroupMessage")
+    public void sendGroupMessage(@Payload ChatMessage chatMessage) {
+        chatMessage.setTimestamp(LocalDateTime.now());
+        String groupTopic = "/topic/group/" + chatMessage.getGroupId();
+        messagingTemplate.convertAndSend(groupTopic, chatMessage);
+    }
 }

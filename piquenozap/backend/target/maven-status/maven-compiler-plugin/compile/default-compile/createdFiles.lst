@@ -11,3 +11,4 @@ com\piquenozap\piquenozapbackend\config\WebSocketConfig$1.class
 com\piquenozap\piquenozapbackend\config\WebSocketConfig.class
 com\piquenozap\piquenozapbackend\PiquenozapBackendApplication.class
 com\piquenozap\piquenozapbackend\controller\UserController.class
+com\piquenozap\piquenozapbackend\repository\ChatMessageRepository.class

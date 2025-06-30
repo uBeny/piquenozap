@@ -106,12 +106,40 @@ function renderUsers() {
         });
 }
 
-function onUserClick(user) {
+async function onUserClick(user) {
     activeChatPartner = user;
     chatHeader.textContent = user.email;
-    messagesArea.innerHTML = '';
+    messagesArea.innerHTML = ''; // Limpa a área de mensagens
+
+    // Remove a classe 'active' de todas as conversas
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    // Adiciona a classe 'active' à conversa clicada
+    document.querySelector(`[data-user-email="${user.email}"]`).classList.add('active');
+
+    try {
+        // Busca o histórico de mensagens do backend
+        const response = await fetch(`/api/messages/${currentUser.email}/${activeChatPartner.email}`);
+        if (!response.ok) {
+            throw new Error('Falha ao buscar histórico de mensagens.');
+        }
+        const messageHistory = await response.json();
+
+        // Exibe cada mensagem do histórico na tela
+        messageHistory.forEach(message => {
+            const isSentByCurrentUser = message.sender === currentUser.email;
+            displayMessage(message, isSentByCurrentUser);
+        });
+
+    } catch (error) {
+        console.error(error);
+        alert('Não foi possível carregar o histórico da conversa.');
+    }
+
     messageInput.focus();
 }
+
 
 function onNewUserRegistered(payload) {
     const newUser = JSON.parse(payload.body);

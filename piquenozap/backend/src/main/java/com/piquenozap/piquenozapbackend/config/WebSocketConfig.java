@@ -37,8 +37,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        // Você pode remover os logs se quiser, mas pode deixá-los para o teste.
         registration.interceptors(new ChannelInterceptor() {
+            @SuppressWarnings("null")
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);

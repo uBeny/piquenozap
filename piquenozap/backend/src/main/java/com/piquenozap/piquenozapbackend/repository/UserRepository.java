@@ -14,4 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.groups WHERE u.email = :email")
     Optional<User> findByEmailWithGroups(@Param("email") String email);
+
+    // NOVO MÉTODO: Busca o usuário e sua lista de bloqueados
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.blockedUsers WHERE u.email = :email")
+    Optional<User> findByEmailWithBlockedUsers(@Param("email") String email);
 }

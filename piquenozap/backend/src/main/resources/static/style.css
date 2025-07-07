@@ -377,3 +377,33 @@ form input[type="password"] {
     color: #8f8f8f;
     margin-top: 10px;
 }
+
+.unblock-button {
+    background-color: #ffffff;
+    color: #070424;
+    border: 1.5px solid #030303;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease;
+    order: -1; 
+}
+
+.block-button {
+    background-color: #c42121; /* Um vermelho para indicar uma ação de "perigo" */
+    color: white;
+    border: 1.5px solid #a01a1a;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease;
+    order: -1;
+}

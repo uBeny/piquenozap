@@ -11,7 +11,6 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@SuppressWarnings("unused")
 @Entity
 @Table(name = "users")
 @Data
@@ -31,4 +30,13 @@ public class User {
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
     private Set<ChatGroup> groups= new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "blocked_users",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "blocked_user_id")
+    )
+    @JsonIgnore
+    private Set<User> blockedUsers = new HashSet<>();
 }

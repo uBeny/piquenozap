@@ -76,6 +76,7 @@ async function fetchConversations() {
         alert('Não foi possível carregar a lista de conversas.');
     }
 }
+//--- OCULTA USUARIOS ---
 
 function renderConversations() {
     conversationsList.innerHTML = '';
@@ -148,7 +149,7 @@ async function isUserBlocked(userEmail) {
     } catch (e) {
         console.error("Erro ao verificar status de bloqueio:", e);
     }
-    return false; // Assume não bloqueado em caso de erro
+    return false;
 }
 
 async function blockUser(userEmail) {
@@ -233,8 +234,6 @@ function updateChatUIForBlockedUser(blocked) {
      }
  }
 
-
-// --- RESTANTE DAS FUNÇÕES ---
 
 function onNewUserRegistered(payload) {
     const newUser = JSON.parse(payload.body);

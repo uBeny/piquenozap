@@ -11,6 +11,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+@SuppressWarnings("unused")
 @Entity
 @Table(name = "users")
 @Data

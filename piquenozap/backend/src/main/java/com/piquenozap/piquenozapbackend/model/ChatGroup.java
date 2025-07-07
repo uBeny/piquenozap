@@ -8,6 +8,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+@SuppressWarnings("unused")
 @Entity
 @Table(name = "chat_groups")
 @Data

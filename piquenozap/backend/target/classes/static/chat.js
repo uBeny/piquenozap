@@ -118,6 +118,8 @@ function renderConversations() {
 async function onUserClick(user) {
     activeChatPartner = user;
     chatHeader.textContent = user.email;
+    messagesArea.innerHTML = ''; // Limpa a área de mensagens ao clicar em um novo usuário
+
     renderConversations();
 
     const blocked = await isUserBlocked(activeChatPartner.email);
@@ -193,7 +195,6 @@ function updateChatUIForBlockedUser(blocked) {
      if (existingBlockButton) existingBlockButton.remove();
      if (existingUnblockButton) existingUnblockButton.remove();
 
-     messagesArea.innerHTML = '';
      messageInput.disabled = false;
      messageInput.placeholder = "DIGITE AQUI SUA MENSAGEM";
 

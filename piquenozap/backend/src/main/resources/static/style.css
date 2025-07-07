@@ -407,3 +407,9 @@ form input[type="password"] {
     transition: background-color 0.2s ease;
     order: -1;
 }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

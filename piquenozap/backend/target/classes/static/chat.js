@@ -14,6 +14,7 @@ let stompClient = null;
 let currentUser = null; 
 let activeChatPartner = null; 
 let allUsers = []; 
+let localGroups = [];
 
 // --- FUNÇÕES DE CONEXÃO E INICIALIZAÇÃO ---
 
@@ -23,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         email: localStorage.getItem('userEmail')
     };
     
-
     if (!currentUser.id || !currentUser.email) {
         alert('Usuário não identificado. Redirecionando para o login.');
         window.location.href = 'login.html';
@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     connect();
     await fetchAndRenderConversations();
     
-    // LINHA NOVA E CORRETA:
     searchInput.addEventListener('keyup', fetchAndRenderConversations);
     messageInput.addEventListener('keypress', onEnterPress);
     logoutButton.addEventListener('click', logout);
@@ -49,13 +48,7 @@ function connect() {
 function onConnected() {
     console.log('Conectado ao WebSocket!');
     
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Inscreve-se no destino de usuário GENÉRICO. 
-    // O Spring irá resolver isso para uma fila única e privada para este usuário.
     stompClient.subscribe('/user/queue/messages', onMessageReceived);
-    // --- FIM DA CORREÇÃO ---
-
-    // Inscrição no tópico PÚBLICO de atualização de usuários (está correto)
     stompClient.subscribe('/topic/users', onNewUserRegistered);
 }
 
@@ -77,11 +70,10 @@ async function fetchAndRenderConversations() {
             throw new Error('Falha ao buscar utilizadores ou grupos.');
         }
 
-        localUsers = await usersResponse.json();
+        allUsers = await usersResponse.json();
         localGroups = await groupsResponse.json();
 
-        console.log("Grupos recebidos da API:", localGroups);
-        renderConversations(localUsers, localGroups);
+        renderConversations(allUsers, localGroups);
 
     } catch (error) {
         console.error(error);
@@ -89,71 +81,76 @@ async function fetchAndRenderConversations() {
     }
 }
 
+// ESTA É A VERSÃO COM A LÓGICA DE OCULTAR ATÉ PESQUISAR
 function renderConversations(users = [], groups = []) {
     conversationsList.innerHTML = '';
     const searchTerm = searchInput.value.toLowerCase();
 
-    // Renderiza os GRUPOS
-    groups
-        .filter(group => group.name.toLowerCase().includes(searchTerm))
-        .forEach(group => {
-            const conversationElement = document.createElement('div');
-            conversationElement.classList.add('conversation-item', 'group-item'); // Adiciona classe para grupos
-            conversationElement.dataset.groupId = group.id; // Guarda o ID do grupo
-            conversationElement.dataset.groupName = group.name;
-
-            const avatar = document.createElement('div');
-            avatar.classList.add('avatar');
-            avatar.textContent = 'G'; // Letra 'G' para identificar o grupo
-            conversationElement.appendChild(avatar);
-
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = group.name;
-            conversationElement.appendChild(nameSpan);
-
-            // Adiciona o evento de clique para ir para a página do grupo
-            conversationElement.addEventListener('click', () => {
-                window.location.href = `group.html?id=${group.id}`;
-            });
-
-            conversationsList.appendChild(conversationElement);
-        });
-
-    
-
-
-    // Renderiza os UTILIZADORES (conversas 1-para-1)
-    const filteredUsers = users.filter(user => user.email !== currentUser.email);
-    
-    if (filteredUsers.length === 0 && groups.length === 0 && searchTerm === '') {
-        conversationsList.innerHTML = '<p style="text-align: center; color: #ccc; font-size: 0.9em; padding: 10px;">Nenhum utilizador ou grupo encontrado.</p>';
+    // Se a barra de pesquisa estiver vazia, exibe a mensagem padrão e para a execução.
+    if (searchTerm === '') {
+        conversationsList.innerHTML = '<p style="text-align: center; color: #ccc; font-size: 0.9em; padding: 10px;">Pesquise usuários ou grupos pelo nome</p>';
         return;
     }
 
-    filteredUsers
-        .filter(user => user.email.toLowerCase().includes(searchTerm))
-        .forEach(user => {
-            const userElement = document.createElement('div');
-            userElement.classList.add('conversation-item');
-            userElement.dataset.userId = user.id;
-            userElement.dataset.userEmail = user.email;
+    // Filtra e renderiza os GRUPOS que correspondem ao termo de pesquisa
+    const filteredGroups = groups.filter(group => group.name.toLowerCase().includes(searchTerm));
+    filteredGroups.forEach(group => {
+        const conversationElement = document.createElement('div');
+        conversationElement.classList.add('conversation-item', 'group-item');
+        conversationElement.dataset.groupId = group.id;
+        conversationElement.dataset.groupName = group.name;
 
-            const avatar = document.createElement('div');
-            avatar.classList.add('avatar');
-            userElement.appendChild(avatar);
+        const avatar = document.createElement('div');
+        avatar.classList.add('avatar');
+        avatar.textContent = 'G';
+        conversationElement.appendChild(avatar);
 
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = user.email;
-            userElement.appendChild(nameSpan);
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = group.name;
+        conversationElement.appendChild(nameSpan);
 
-            userElement.addEventListener('click', () => onUserClick(user)); // Mantém a função antiga para chats privados
-            conversationsList.appendChild(userElement);
+        conversationElement.addEventListener('click', () => {
+            window.location.href = `group.html?id=${group.id}`;
         });
+
+        conversationsList.appendChild(conversationElement);
+    });
+
+    // Filtra e renderiza os UTILIZADORES que correspondem ao termo de pesquisa
+    const filteredUsers = users
+        .filter(user => user.email !== currentUser.email)
+        .filter(user => user.email.toLowerCase().includes(searchTerm));
+        
+    filteredUsers.forEach(user => {
+        const userElement = document.createElement('div');
+        userElement.classList.add('conversation-item');
+        userElement.dataset.userId = user.id;
+        userElement.dataset.userEmail = user.email;
+
+        const avatar = document.createElement('div');
+        avatar.classList.add('avatar');
+        userElement.appendChild(avatar);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = user.email;
+        userElement.appendChild(nameSpan);
+
+        userElement.addEventListener('click', () => onUserClick(user));
+
+        conversationsList.appendChild(userElement);
+    });
+
+    // Se, após a filtragem, nenhum resultado for encontrado, exibe a mensagem apropriada.
+    if (filteredGroups.length === 0 && filteredUsers.length === 0) {
+        conversationsList.innerHTML = '<p style="text-align: center; color: #ccc; font-size: 0.9em; padding: 10px;">Nenhum utilizador ou grupo encontrado.</p>';
+    }
 }
+
 
 async function onUserClick(user) {
     activeChatPartner = user;
-    
+    chatHeader.textContent = user.email; // LINHA ADICIONADA AQUI
+
     // 1. Redesenha a lista de conversas, marcando a conversa atual como ativa.
     renderConversations(localUsers, localGroups); 
     
@@ -183,8 +180,6 @@ function onNewUserRegistered(payload) {
     const newUser = JSON.parse(payload.body);
     if (!allUsers.some(user => user.id === newUser.id)) {
         allUsers.push(newUser);
-        renderUsers();
-        console.log('Novo usuário adicionado à lista:', newUser);
     }
 }
 
@@ -215,11 +210,9 @@ function sendMessage() {
 function onMessageReceived(payload) {
     const message = JSON.parse(payload.body);
     
-    // Verifica se a mensagem é do parceiro de chat atualmente ativo
     if (activeChatPartner && message.sender === activeChatPartner.email) {
         displayMessage(message, false);
     } else {
-        // Se a mensagem for de outro usuário, mostra um alerta (ou uma notificação no futuro)
         alert(`Nova mensagem de: ${message.sender}`);
     }
 }
@@ -255,9 +248,6 @@ function logout() {
     window.location.href = 'login.html';
 }
 
-let localUsers = [];
-let localGroups = [];
-
 async function createNewGroup() {
     const groupName = prompt("Por favor, digite o nome do novo grupo:");
 
@@ -276,11 +266,8 @@ async function createNewGroup() {
             const newGroup = await response.json();
             alert(`Grupo "${newGroup.name}" criado com sucesso!`);
             
-            // --- ESTA É A ALTERAÇÃO PRINCIPAL ---
-            // Em vez de ir buscar tudo de novo, adicionamos o novo grupo
-            // à nossa lista local e renderizamos novamente.
-            localGroups.push(newGroup);
-            renderConversations(localUsers, localGroups);
+            // Re-busca os dados para garantir que a lista local esteja atualizada
+            await fetchAndRenderConversations();
 
         } catch (error) {
             console.error('Erro ao criar grupo:', error);

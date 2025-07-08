@@ -13,9 +13,9 @@ let currentUser = null;
 let groupId = null;
 let localUsers = [];
 let localGroups = [];
+let processedClientMessageIds = new Set(); // Para deduplicação
 
 // --- FUNÇÕES DE INICIALIZAÇÃO ---
-
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     groupId = params.get('id');
@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'chat.html';
         return;
     }
-
-    // Busca todas as conversas E os detalhes do grupo atual
+    
+    messagesArea.innerHTML = '';
     await Promise.all([
         fetchAndRenderConversations(),
         fetchCurrentGroupDetails() 
@@ -43,7 +43,173 @@ document.addEventListener('DOMContentLoaded', async () => {
     logoutButton.addEventListener('click', logout);
 });
 
-// Busca os detalhes do grupo atual e atualiza o cabeçalho
+function connect() {
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, onConnected, onError);
+}
+
+function onConnected() {
+    stompClient.subscribe(`/topic/group/${groupId}`, onMessageReceived);
+}
+
+function onError(error) {
+    console.error('Erro no WebSocket:', error);
+}
+
+// --- LÓGICA DE MENSAGENS ---
+function sendMessage() {
+    const messageContent = messageInput.value.trim();
+    if (messageContent && stompClient) {
+        const chatMessage = {
+            sender: currentUser.email,
+            content: messageContent,
+            groupId: groupId,
+            type: 'GROUP_CHAT',
+            clientMessageId: `client-${Date.now()}-${Math.random()}` // ID ÚNICO DO CLIENTE
+        };
+        stompClient.send("/app/chat.sendGroupMessage", {}, JSON.stringify(chatMessage));
+        messageInput.value = '';
+    }
+}
+
+function onEnterPress(event) {
+    if (event.key === 'Enter') sendMessage();
+}
+
+function onMessageReceived(payload) {
+    const message = JSON.parse(payload.body);
+
+    if (message.clientMessageId) {
+        if (processedClientMessageIds.has(message.clientMessageId)) {
+            const tempElement = document.querySelector(`[data-client-id="${message.clientMessageId}"]`);
+            if (tempElement && !tempElement.id && message.id) {
+                 tempElement.id = `message-${message.id}`;
+            }
+            return; 
+        }
+        processedClientMessageIds.add(message.clientMessageId);
+    }
+
+    const messageElement = message.id ? document.getElementById(`message-${message.id}`) : null;
+
+    switch (message.type) {
+        case 'EDIT':
+            if (messageElement) {
+                const contentP = messageElement.querySelector('.message-content');
+                const editedTag = messageElement.querySelector('.edited-tag');
+                if (contentP) {
+                    contentP.textContent = message.content;
+                    if (!editedTag) {
+                        const newTag = document.createElement('span');
+                        newTag.className = 'edited-tag';
+                        newTag.textContent = 'editado';
+                        messageElement.appendChild(newTag);
+                    }
+                }
+            }
+            break;
+        case 'DELETE':
+            if (messageElement) {
+                messageElement.remove();
+            }
+            break;
+        default: // GROUP_CHAT
+            if (messageElement) return;
+            if (message.groupId == groupId) {
+                displayMessage(message);
+            }
+            break;
+    }
+}
+
+function displayMessage(message) {
+    const isSentByCurrentUser = message.sender === currentUser.email;
+
+    const messageElement = document.createElement('div');
+    if (message.id) {
+        messageElement.id = `message-${message.id}`;
+    }
+    if (message.clientMessageId) {
+        messageElement.dataset.clientId = message.clientMessageId;
+    }
+
+    messageElement.classList.add('message-bubble', isSentByCurrentUser ? 'sent' : 'received');
+
+    let messageHTML = '';
+    if (!isSentByCurrentUser) {
+        messageHTML += `<p class="message-sender">${message.sender}</p>`;
+    }
+    messageHTML += `<p class="message-content">${message.content}</p>`;
+    messageElement.innerHTML = messageHTML;
+
+    if (message.type === 'EDIT') {
+        const newTag = document.createElement('span');
+        newTag.className = 'edited-tag';
+        newTag.textContent = 'editado';
+        messageElement.appendChild(newTag);
+    }
+
+    if (isSentByCurrentUser) {
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'message-options';
+        optionsContainer.innerHTML = '&#8942;';
+
+        const menu = document.createElement('div');
+        menu.className = 'options-menu';
+        menu.style.display = 'none';
+
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Editar';
+        editButton.onclick = () => editMessage(message.id, message.content);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Apagar';
+        deleteButton.onclick = () => deleteMessage(message.id);
+
+        menu.appendChild(editButton);
+        menu.appendChild(deleteButton);
+        optionsContainer.appendChild(menu);
+        messageElement.appendChild(optionsContainer);
+
+        optionsContainer.onclick = (e) => {
+            e.stopPropagation();
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        };
+
+        document.addEventListener('click', () => {
+            if (menu.style.display === 'block') menu.style.display = 'none';
+        });
+    }
+
+    messagesArea.appendChild(messageElement);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+function editMessage(messageId, currentContent) {
+    const newContent = prompt("Edite sua mensagem:", currentContent);
+    if (newContent && newContent.trim() !== '' && newContent !== currentContent) {
+        const editedMessage = {
+            id: messageId,
+            content: newContent,
+            sender: currentUser.email
+        };
+        stompClient.send("/app/chat.editMessage", {}, JSON.stringify(editedMessage));
+    }
+}
+
+function deleteMessage(messageId) {
+    if (confirm("Tem certeza de que deseja apagar esta mensagem?")) {
+        const messageToDelete = {
+            id: messageId,
+            sender: currentUser.email
+        };
+        stompClient.send("/app/chat.deleteMessage", {}, JSON.stringify(messageToDelete));
+    }
+}
+
+
+// --- O restante das funções (fetchCurrentGroupDetails, fetchAndRenderConversations, etc.) permanece o mesmo ---
 async function fetchCurrentGroupDetails() {
     try {
         const response = await fetch(`/api/groups/${groupId}`);
@@ -52,11 +218,9 @@ async function fetchCurrentGroupDetails() {
         chatHeader.textContent = groupDetails.name;
     } catch (error) {
         console.error(error);
-        chatHeader.textContent = `Grupo ${groupId}`; // Fallback
+        chatHeader.textContent = `Grupo ${groupId}`; 
     }
 }
-
-// Busca utilizadores e grupos para preencher a barra lateral
 async function fetchAndRenderConversations() {
     try {
         const [usersResponse, groupsResponse] = await Promise.all([
@@ -77,8 +241,6 @@ async function fetchAndRenderConversations() {
         console.error(error);
     }
 }
-
-// Renderiza a barra lateral (esta função é idêntica à do chat.js)
 function renderConversations(users, groups) {
     conversationsList.innerHTML = '';
 
@@ -87,22 +249,13 @@ function renderConversations(users, groups) {
         el.classList.add('conversation-item', 'group-item');
         el.dataset.groupId = group.id;
 
-        // Marca o grupo atual como ativo
         if (group.id == groupId) {
             el.classList.add('active');
         }
 
-        const avatar = document.createElement('div');
-        avatar.classList.add('avatar');
-        avatar.textContent = 'G';
-        el.appendChild(avatar);
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = group.name;
-        el.appendChild(nameSpan);
-
+        el.innerHTML = `<div class="avatar">G</div><span>${group.name}</span>`;
         el.addEventListener('click', () => {
-            if (group.id != groupId) { // Só recarrega se for um grupo diferente
+            if (group.id != groupId) {
                 window.location.href = `group.html?id=${group.id}`;
             }
         });
@@ -113,81 +266,13 @@ function renderConversations(users, groups) {
         const el = document.createElement('div');
         el.classList.add('conversation-item');
         el.dataset.userEmail = user.email;
-        
-        const avatar = document.createElement('div');
-        avatar.classList.add('avatar');
-        el.appendChild(avatar);
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = user.email;
-        el.appendChild(nameSpan);
-
-        // Ao clicar num utilizador, volta para a página principal de chat
+        el.innerHTML = `<div class="avatar"></div><span>${user.email}</span>`;
         el.addEventListener('click', () => {
             window.location.href = `chat.html`; 
         });
         conversationsList.appendChild(el);
     });
 }
-
-// --- Funções de WebSocket e Mensagens (permanecem as mesmas) ---
-
-function connect() {
-    const socket = new SockJS('/ws');
-    stompClient = Stomp.over(socket);
-    stompClient.connect({}, onConnected, onError);
-}
-
-function onConnected() {
-    stompClient.subscribe(`/topic/group/${groupId}`, onMessageReceived);
-}
-
-function onError(error) {
-    console.error('Erro no WebSocket:', error);
-}
-
-function sendMessage() {
-    const messageContent = messageInput.value.trim();
-    if (messageContent && stompClient) {
-        const chatMessage = {
-            sender: currentUser.email,
-            content: messageContent,
-            groupId: groupId,
-            type: 'GROUP_CHAT'
-        };
-        stompClient.send("/app/chat.sendGroupMessage", {}, JSON.stringify(chatMessage));
-        messageInput.value = '';
-    }
-}
-
-function onEnterPress(event) {
-    if (event.key === 'Enter') sendMessage();
-}
-
-function onMessageReceived(payload) {
-    const message = JSON.parse(payload.body);
-    displayMessage(message, message.sender === currentUser.email);
-}
-
-function displayMessage(message, isSentByCurrentUser) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message-bubble', isSentByCurrentUser ? 'sent' : 'received');
-
-    if (!isSentByCurrentUser) {
-        const senderElement = document.createElement('p');
-        senderElement.classList.add('message-sender');
-        senderElement.textContent = message.sender;
-        messageElement.appendChild(senderElement);
-    }
-
-    const contentElement = document.createElement('p');
-    contentElement.textContent = message.content;
-    messageElement.appendChild(contentElement);
-
-    messagesArea.appendChild(messageElement);
-    messagesArea.scrollTop = messagesArea.scrollHeight;
-}
-
 function logout() {
     localStorage.clear();
     if (stompClient) stompClient.disconnect();

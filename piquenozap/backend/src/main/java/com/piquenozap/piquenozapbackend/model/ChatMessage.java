@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -24,10 +25,15 @@ public class ChatMessage {
     private LocalDateTime timestamp;
     private Long groupId;
 
+    @Transient
+    private String clientMessageId;
+
     public enum MessageType {
         CHAT,
         JOIN,
         LEAVE,
-        GROUP_CHAT
+        GROUP_CHAT,
+        EDIT,
+        DELETE
     }
 }

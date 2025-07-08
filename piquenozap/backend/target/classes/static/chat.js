@@ -8,7 +8,7 @@ const messagesArea = document.querySelector('.messages-area');
 const messageInput = document.querySelector('.message-input-area input');
 const logoutButton = document.querySelector('.logout-button');
 const newGroupButton = document.querySelector('.new-group-button');
-const headerButtonsContainer = document.querySelector('.header-buttons');
+const headerButtonsContainer = document.querySelector('.chat-header > div:last-child');
 
 // --- ESTADO DA APLICAÇÃO ---
 let stompClient = null;
@@ -16,9 +16,9 @@ let currentUser = null;
 let activeChatPartner = null;
 let allUsers = [];
 let localGroups = [];
+let processedClientMessageIds = new Set(); // Para deduplicação
 
 // --- FUNÇÕES DE CONEXÃO E INICIALIZAÇÃO ---
-
 document.addEventListener('DOMContentLoaded', async () => {
     currentUser = {
         id: localStorage.getItem('userId'),
@@ -57,8 +57,165 @@ function onError(error) {
     alert('Não foi possível conectar ao chat. Tente recarregar a página.');
 }
 
-// --- FUNÇÕES DE RENDERIZAÇÃO E UI ---
+// --- LÓGICA DE MENSAGENS ---
+function sendMessage() {
+    const messageContent = messageInput.value.trim();
+    if (messageContent && stompClient && activeChatPartner) {
+        const chatMessage = {
+            sender: currentUser.email,
+            recipientEmail: activeChatPartner.email,
+            content: messageContent,
+            type: 'CHAT',
+            clientMessageId: `client-${Date.now()}-${Math.random()}` // ID ÚNICO DO CLIENTE
+        };
+        stompClient.send("/app/chat.sendPrivateMessage", {}, JSON.stringify(chatMessage));
+        messageInput.value = '';
+    }
+}
 
+function onMessageReceived(payload) {
+    const message = JSON.parse(payload.body);
+
+    // Lógica para evitar duplicatas
+    if (message.clientMessageId) {
+        if (processedClientMessageIds.has(message.clientMessageId)) {
+            const tempElement = document.querySelector(`[data-client-id="${message.clientMessageId}"]`);
+            if (tempElement && !tempElement.id && message.id) {
+                 tempElement.id = `message-${message.id}`;
+            }
+            return; // Mensagem já processada
+        }
+        processedClientMessageIds.add(message.clientMessageId);
+    }
+
+    const messageElement = message.id ? document.getElementById(`message-${message.id}`) : null;
+
+    switch (message.type) {
+        case 'EDIT':
+            if (messageElement) {
+                const contentP = messageElement.querySelector('.message-content');
+                const editedTag = messageElement.querySelector('.edited-tag');
+                if (contentP) {
+                    contentP.textContent = message.content;
+                    // Adiciona a tag "editado" se ela ainda não existir
+                    if (!editedTag) {
+                        const newTag = document.createElement('span');
+                        newTag.className = 'edited-tag';
+                        newTag.textContent = 'editado';
+                        messageElement.appendChild(newTag);
+                    }
+                }
+            }
+            break;
+        case 'DELETE':
+            if (messageElement) {
+                messageElement.remove();
+            }
+            break;
+        default: // CHAT
+            if (messageElement) return;
+            
+            const isConversationActive = activeChatPartner && (message.sender === activeChatPartner.email || message.recipientEmail === activeChatPartner.email);
+            if (isConversationActive || message.sender === currentUser.email) {
+                 displayMessage(message);
+            }
+            break;
+    }
+}
+
+function displayMessage(message) {
+    const isSentByCurrentUser = message.sender === currentUser.email;
+    const messageElement = document.createElement('div');
+    
+    if (message.id) {
+        messageElement.id = `message-${message.id}`;
+    }
+    if (message.clientMessageId) {
+        messageElement.dataset.clientId = message.clientMessageId;
+    }
+
+    messageElement.classList.add('message-bubble', isSentByCurrentUser ? 'sent' : 'received');
+
+    let messageHTML = '';
+    if (!isSentByCurrentUser) {
+        messageHTML += `<p class="message-sender">${message.sender}</p>`;
+    }
+    // Adicionamos uma classe ao parágrafo do conteúdo para selecioná-lo facilmente
+    messageHTML += `<p class="message-content">${message.content}</p>`;
+    messageElement.innerHTML = messageHTML;
+
+    // Se a mensagem (do histórico) já foi editada, adiciona a tag
+    if (message.type === 'EDIT') {
+        const newTag = document.createElement('span');
+        newTag.className = 'edited-tag';
+        newTag.textContent = 'editado';
+        messageElement.appendChild(newTag);
+    }
+
+    if (isSentByCurrentUser) {
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'message-options';
+        optionsContainer.innerHTML = '&#8942;';
+
+        const menu = document.createElement('div');
+        menu.className = 'options-menu';
+        menu.style.display = 'none';
+
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Editar';
+        editButton.onclick = () => editMessage(message.id, message.content);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Apagar';
+        deleteButton.onclick = () => deleteMessage(message.id);
+
+        menu.appendChild(editButton);
+        menu.appendChild(deleteButton);
+        optionsContainer.appendChild(menu);
+        messageElement.appendChild(optionsContainer);
+
+        optionsContainer.onclick = (e) => {
+            e.stopPropagation();
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        };
+
+        document.addEventListener('click', () => {
+            if (menu.style.display === 'block') menu.style.display = 'none';
+        });
+    }
+
+    messagesArea.appendChild(messageElement);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+function editMessage(messageId, currentContent) {
+    const newContent = prompt("Edite sua mensagem:", currentContent);
+    if (newContent && newContent.trim() !== '' && newContent !== currentContent) {
+        const editedMessage = {
+            id: messageId,
+            content: newContent,
+            sender: currentUser.email
+        };
+        stompClient.send("/app/chat.editMessage", {}, JSON.stringify(editedMessage));
+    }
+}
+
+function deleteMessage(messageId) {
+    if (confirm("Tem certeza de que deseja apagar esta mensagem?")) {
+        const messageToDelete = {
+            id: messageId,
+            sender: currentUser.email
+        };
+        stompClient.send("/app/chat.deleteMessage", {}, JSON.stringify(messageToDelete));
+    }
+}
+
+
+function onEnterPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
 async function fetchConversations() {
     try {
         const [usersResponse, groupsResponse] = await Promise.all([
@@ -76,8 +233,6 @@ async function fetchConversations() {
         alert('Não foi possível carregar a lista de conversas.');
     }
 }
-//--- OCULTA USUARIOS ---
-
 function renderConversations() {
     conversationsList.innerHTML = '';
     const searchTerm = searchInput.value.toLowerCase().trim();
@@ -114,12 +269,10 @@ function renderConversations() {
         conversationsList.innerHTML = '<p style="text-align: center; color: #ccc; font-size: 0.9em; padding: 10px;">Nenhum resultado encontrado.</p>';
     }
 }
-
 async function onUserClick(user) {
     activeChatPartner = user;
     chatHeader.textContent = user.email;
-    messagesArea.innerHTML = ''; // Limpa a área de mensagens ao clicar em um novo usuário
-
+    messagesArea.innerHTML = ''; 
     renderConversations();
 
     const blocked = await isUserBlocked(activeChatPartner.email);
@@ -138,9 +291,6 @@ async function onUserClick(user) {
     }
     messageInput.focus();
 }
-
-// --- LÓGICA DE BLOQUEIO E DESBLOQUEIO ---
-
 async function isUserBlocked(userEmail) {
     try {
         const response = await fetch(`/api/block/status/${currentUser.email}/${userEmail}`);
@@ -153,7 +303,6 @@ async function isUserBlocked(userEmail) {
     }
     return false;
 }
-
 async function blockUser(userEmail) {
     try {
         const response = await fetch(`/api/block/block`, {
@@ -170,7 +319,6 @@ async function blockUser(userEmail) {
         return false;
     }
 }
-
 async function unblockUser(userEmail) {
     try {
         const response = await fetch(`/api/block/unblock`, {
@@ -187,9 +335,7 @@ async function unblockUser(userEmail) {
         return false;
     }
 }
-
 function updateChatUIForBlockedUser(blocked) {
-     // Limpa botões antigos para evitar duplicação
      const existingBlockButton = headerButtonsContainer.querySelector('.block-button');
      const existingUnblockButton = headerButtonsContainer.querySelector('.unblock-button');
      if (existingBlockButton) existingBlockButton.remove();
@@ -205,20 +351,18 @@ function updateChatUIForBlockedUser(blocked) {
 
          const unblockButton = document.createElement('button');
          unblockButton.textContent = 'Desbloquear';
-         unblockButton.className = 'unblock-button'; // Garante que a classe de estilo seja aplicada
-
+         unblockButton.className = 'unblock-button'; 
          unblockButton.onclick = async () => {
              const success = await unblockUser(activeChatPartner.email);
              if (success) {
-                 onUserClick(activeChatPartner); // Recarrega a conversa
+                await onUserClick(activeChatPartner);
              } else {
                  alert('Falha ao desbloquear o usuário.');
              }
          };
          headerButtonsContainer.prepend(unblockButton);
 
-     } else {
-         // Se não estiver bloqueado, mostra o botão para bloquear
+     } else if (activeChatPartner) {
          const blockButton = document.createElement('button');
          blockButton.textContent = 'Bloquear';
          blockButton.className = 'block-button';
@@ -226,16 +370,14 @@ function updateChatUIForBlockedUser(blocked) {
          blockButton.onclick = async () => {
              const success = await blockUser(activeChatPartner.email);
              if (success) {
-                 onUserClick(activeChatPartner); // Recarrega a conversa
+                await onUserClick(activeChatPartner);
              } else {
                  alert('Falha ao bloquear o usuário.');
              }
          };
          headerButtonsContainer.prepend(blockButton);
      }
- }
-
-
+}
 function onNewUserRegistered(payload) {
     const newUser = JSON.parse(payload.body);
     if (!allUsers.some(user => user.id === newUser.id)) {
@@ -243,56 +385,11 @@ function onNewUserRegistered(payload) {
         renderConversations();
     }
 }
-
-function onEnterPress(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
-}
-
-function sendMessage() {
-    const messageContent = messageInput.value.trim();
-    if (messageContent && stompClient && activeChatPartner) {
-        const chatMessage = {
-            sender: currentUser.email,
-            recipientEmail: activeChatPartner.email,
-            content: messageContent,
-            type: 'CHAT'
-        };
-        stompClient.send("/app/chat.sendPrivateMessage", {}, JSON.stringify(chatMessage));
-        displayMessage(chatMessage, true);
-        messageInput.value = '';
-    }
-}
-
-function onMessageReceived(payload) {
-    const message = JSON.parse(payload.body);
-    if (activeChatPartner && message.sender === activeChatPartner.email) {
-        displayMessage(message, false);
-    } else {
-        alert(`Nova mensagem de: ${message.sender}`);
-    }
-}
-
-function displayMessage(message, isSentByCurrentUser) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message-bubble', isSentByCurrentUser ? 'sent' : 'received');
-    let messageHTML = '';
-    if (!isSentByCurrentUser) {
-        messageHTML += `<p class="message-sender">${message.sender}</p>`;
-    }
-    messageHTML += `<p>${message.content}</p>`;
-    messageElement.innerHTML = messageHTML;
-    messagesArea.appendChild(messageElement);
-    messagesArea.scrollTop = messagesArea.scrollHeight;
-}
-
 function logout() {
     localStorage.clear();
     if (stompClient) stompClient.disconnect();
     window.location.href = 'login.html';
 }
-
 async function createNewGroup() {
     const groupName = prompt("Por favor, digite o nome do novo grupo:");
     if (groupName && groupName.trim() !== '') {

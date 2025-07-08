@@ -413,3 +413,66 @@ form input[type="password"] {
     align-items: center;
     gap: 10px;
 }
+
+/* Estilos para o menu de opções da mensagem */
+.message-options {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    padding: 5px;
+    display: none;
+}
+
+.message-bubble:hover .message-options {
+    display: block;
+}
+
+.options-menu {
+    position: absolute;
+    top: 25px;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+    overflow: hidden;
+}
+
+.options-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.options-menu button:hover {
+    background-color: #f0f0f0;
+}
+
+.message-bubble.editing {
+    padding: 5px;
+}
+
+.message-content {
+    /* Este seletor ajuda a identificar o parágrafo do conteúdo */
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+}
+
+.edited-tag {
+    display: block;
+    font-size: 0.7em;
+    color: #a0a0a0;
+    text-align: right;
+    margin-top: 3px;
+}
+
+.message-bubble.sent .edited-tag {
+    color: #dcd2ff;
+}
